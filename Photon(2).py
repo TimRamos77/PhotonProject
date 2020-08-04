@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import random
-
+#test committ
 n1 = 1.5
 n2 = 1.0
 theta_critical = (math.asin(n2 / n1))
