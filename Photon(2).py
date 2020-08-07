@@ -250,8 +250,8 @@ length = None
 
 Xoy = 0
 Xoz = 0
-phi_line = math.pi/4   #-pi/2 <= phi_line <= pi/2
-theta_line = math.pi/4  #0 <= theta_line <= pi
+phi_line = random.uniform(-math.pi/2, math.pi/2)   #-pi/2 <= phi_line <= pi/2
+theta_line = math.acos(random.uniform(-1., 1.))  #0 <= theta_line <= pi
 l = 20
 w = 10
 h = 4
