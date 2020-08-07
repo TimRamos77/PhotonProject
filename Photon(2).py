@@ -201,7 +201,7 @@ def photon(v, Ro, l, w, h, detector, air_gap, rec = 0):
                 r_ave = (abs(r_perp) + abs(r_para)) / 2
                 Reflectance = (r_ave ** 2) * 100
                 Transmittance = 100 - Reflectance
-                select_path = random.uniform(0, 100)
+                select_path = random.uniform(0, 101)
                 Min = min(Transmittance, Reflectance)
                 if air_gap:
                     if 0 <= select_path <= Min:
@@ -291,7 +291,7 @@ for n in range(1000):
     Roy = (t-Xoy) * math.tan(phi_line) #y(t)
     Roz = (t-Xoz) * math.tan((math.pi/2)-theta_line) #z(t)
 
-    detected_photon += int(photon(np.array([Vx, Vy, Vz]), np.array([0, 0, 0]), l, w, h, 1, False))
+    detected_photon += int(photon(np.array([Vx, Vy, Vz]), np.array([Rox, Roy, Roz]), l, w, h, 1, False))
 
 
 print("Hits the detector " + str(detected_photon) + " times")
