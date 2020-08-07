@@ -286,7 +286,7 @@ for n in range(1000):
     Vy = math.sin(theta_initial) * math.sin(phi_initial)
     Vz = math.cos(theta_initial)
 
-
+    t = random.uniform(ts[2], ts[3])
     Rox = t #x(t)
     Roy = (t-Xoy) * math.tan(phi_line) #y(t)
     Roz = (t-Xoz) * math.tan((math.pi/2)-theta_line) #z(t)
