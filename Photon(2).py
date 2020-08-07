@@ -21,14 +21,14 @@ def photon(v, Ro, l, w, h, detector, air_gap, rec = 0):
             t = (x - Ro[i]) / v[i]
             y = Ro[i+1] + v[i+1] * t
             z = Ro[i+2] + v[i+2] * t
-            R = np.array([x, y, z])
+            R = np.array([x, y, z])  #finds the coordinates where the photon hits the x = l/2 plane
         if v[i] < 0.:
             x = -l/2
             t = (x - Ro[i]) / v[i]
             y = Ro[i+1] + v[i+1] * t
             z = Ro[i+2] + v[i+2] * t
-            R = np.array([x, y, z])
-        if (-l/2 <= R[i] <= l/2) and (-w/2 <= R[i+1] <= w/2) and (-h/2 <= R[i+2] <= h/2):
+            R = np.array([x, y, z])  #finds the coordinates where the photon hits the x = -l/2 plane
+        if (-l/2 <= R[i] <= l/2) and (-w/2 <= R[i+1] <= w/2) and (-h/2 <= R[i+2] <= h/2): #checks to see if any of those two points are within the boundaries of the box
             theta_i = (math.acos(abs(v[i]) / math.sqrt(v[i] ** 2 + v[i+1] ** 2 + v[i+2] ** 2)))
             if theta_i > theta_critical:
                 if air_gap:
