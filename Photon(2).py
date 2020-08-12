@@ -8,8 +8,7 @@ import random
 
 class Simulation:
 
-
-    def __init__(self, l, w, h, n1, n2, detector, air_gap, rec=0, T = 0, phi_line = math.pi/4,
+    def __init__(self, l, w, h, n1, n2, detector, air_gap, rec=0, phi_line = math.pi/4,
                  theta_line = math.pi/4, Xoy = 0, Xoz = 0):
         self.l = l
         self.w = w
@@ -19,7 +18,6 @@ class Simulation:
         self.detector = detector
         self.air_gap = air_gap
         self.rec = rec
-        self.T = T
         self.phi_line = phi_line
         self.theta_line = theta_line
         self.Xoy = Xoy
@@ -27,8 +25,7 @@ class Simulation:
         self.theta_critical = (math.asin(n2 / n1))
 
 
-    def random(self):
-        length = None
+    def random_line(self):
 
         Tmin_x = -self.l / 2
         Tmax_x = self.l / 2
@@ -48,46 +45,47 @@ class Simulation:
                     -self.w / 2 <= (self.Ts[i] - self.Xoy) * math.tan(self.phi_line) <= self.w / 2) and
                     (-self.h / 2 <= (self.Ts[i] - self.Xoz) * math.tan((math.pi / 2) - self.theta_line) <= self.h / 2)):
                 self.T = random.uniform(self.Ts[2], self.Ts[3])
-                length = (self.Ts[3] - self.Ts[2]) * math.sqrt(
+                self.length = (self.Ts[3] - self.Ts[2]) * math.sqrt(
                     1 + (math.tan(self.phi_line)) ** 2 + (math.tan((math.pi / 2) - self.theta_line)) ** 2)
             else:
                 print("T is not defined")
                 return False
 
 
-    def photon(self):
+    def photon(self, V, Ro):
+
         self.rec += 1
 
         if self.rec > 900:
             return False
 
         for i in range(1):
-            if self.V[i] > 0.:
+            if V[i] > 0.:
                 x = self.l/2
-                t = (x - self.Ro[i]) / self.V[i]
-                y = self.Ro[i+1] + self.V[i+1] * t
-                z = self.Ro[i+2] + self.V[i+2] * t
+                t = (x - Ro[i]) / V[i]
+                y = Ro[i+1] + V[i+1] * t
+                z = Ro[i+2] + V[i+2] * t
                 R = np.array([x, y, z])  #finds the coordinates where the photon hits the x = l/2 plane
-            if self.V[i] < 0.:
+            if V[i] < 0.:
                 x = -self.l/2
-                t = (x - self.Ro[i]) / self.V[i]
-                y = self.Ro[i+1] + self.V[i+1] * t
-                z = self.Ro[i+2] + self.V[i+2] * t
+                t = (x - Ro[i]) / V[i]
+                y = Ro[i+1] + V[i+1] * t
+                z = Ro[i+2] + V[i+2] * t
                 R = np.array([x, y, z])  #finds the coordinates where the photon hits the x = -l/2 plane
             if (-self.l/2 <= R[i] <= self.l/2) and (-self.w/2 <= R[i+1] <= self.w/2) and (-self.h/2 <= R[i+2] <= self.h/2): #checks to see if any of those two points are within the boundaries of the box
-                theta_i = (math.acos(abs(self.V[i]) / math.sqrt(self.V[i] ** 2 + self.V[i+1] ** 2 + self.V[i+2] ** 2)))
+                theta_i = (math.acos(abs(V[i]) / math.sqrt(V[i] ** 2 + V[i+1] ** 2 + V[i+2] ** 2)))
                 if theta_i > self.theta_critical:
                     if self.air_gap:
-                        self.V[i] *= -1
-                        self.Ro = R
-                        return self.photon()
+                        V[i] *= -1
+                        Ro = R
+                        return self.photon(V, Ro)
                     if not(self.air_gap):
                         if (self.detector == 1 and x == self.l / 2) or (self.detector == 2 and x == -self.l / 2):
                             return True
                         else:
-                            self.V[i] *= -1
-                            self.Ro = R
-                            return self.photon()
+                            V[i] *= -1
+                            Ro = R
+                            return self.photon(V, Ro)
                 else:
                     theta_t = math.asin(self.n1 * math.sin(theta_i))
                     r_perp = (self.n1 * math.cos(theta_i) - self.n2 * math.cos(theta_t)) / (self.n1 * math.cos(theta_i) + self.n2 * math.cos(theta_t))
@@ -100,9 +98,9 @@ class Simulation:
                     if self.air_gap:
                         if 0 <= select_path <= Min:
                             if Min == Reflectance:
-                                self.V[i] *= -1
-                                self.Ro = R
-                                return self.photon()
+                                V[i] *= -1
+                                Ro = R
+                                return self.photon(V, Ro)
                             if Min == Transmittance:
                                 if (self.detector == 1 and x == self.l / 2) or (self.detector == 2 and x == -self.l / 2):
                                     return True
@@ -115,56 +113,56 @@ class Simulation:
                                 else:
                                     return False
                             if Min == Transmittance:
-                                self.V[i] *= -1
-                                self.Ro = R
-                                return self.photon()
+                                V[i] *= -1
+                                Ro = R
+                                return self.photon(V, Ro)
                     if not self.air_gap:
                         if (self.detector == 1 and x == self.l / 2) or (self.detector == 2 and x == -self.l / 2):
                             return True
                         else:
                             if 0 <= select_path <= Min:
                                 if Min == Reflectance:
-                                    self.V[i] *= -1
-                                    self.Ro = R
-                                    return self.photon()
+                                    V[i] *= -1
+                                    Ro = R
+                                    return self.photon(V, Ro)
                                 if Min == Transmittance:
                                     return False
                             else:
                                 if Min == Reflectance:
                                     return False
                                 if Min == Transmittance:
-                                    self.V[i] *= -1
-                                    self.Ro = R
-                                    return self.photon()
+                                    V[i] *= -1
+                                    Ro = R
+                                    return self.photon(V, Ro)
 
 
         for i in range(1,2):
-            if self.V[i] > 0.:
+            if V[i] > 0.:
                 y = self.w/2
-                t = (y - self.Ro[i]) / self.V[i]
-                x = self.Ro[i-1] + self.V[i-1] * t
-                z = self.Ro[i+1] + self.V[i+1] * t
+                t = (y - Ro[i]) / V[i]
+                x = Ro[i-1] + V[i-1] * t
+                z = Ro[i+1] + V[i+1] * t
                 R = np.array([x, y, z])
-            if self.V[i] < 0.:
+            if V[i] < 0.:
                 y = -self.w/2
-                t = (y - self.Ro[i]) / self.V[i]
-                x = self.Ro[i-1] + self.V[i-1] * t
-                z = self.Ro[i+1] + self.V[i+1] * t
+                t = (y - Ro[i]) / V[i]
+                x = Ro[i-1] + V[i-1] * t
+                z = Ro[i+1] + V[i+1] * t
                 R = np.array([x, y, z])
             if (-self.l/2 <= R[i-1] <= self.l/2) and (-self.w/2 <= R[i] <= self.w/2) and (-self.h/2 <= R[i+1] <= self.h/2):
-                theta_i = (math.acos(abs(self.V[i]) / math.sqrt(self.V[i-1] ** 2 + self.V[i] ** 2 + self.V[i+1] ** 2)))
+                theta_i = (math.acos(abs(V[i]) / math.sqrt(V[i-1] ** 2 + V[i] ** 2 + V[i+1] ** 2)))
                 if theta_i > self.theta_critical:
                     if self.air_gap:
-                        self.V[i] *= -1
-                        self.Ro = R
-                        return self.photon()
+                        V[i] *= -1
+                        Ro = R
+                        return self.photon(V, Ro)
                     if not(self.air_gap):
                         if (self.detector == 3 and y == self.w / 2) or (self.detector == 4 and y == -self.w / 2):
                             return True
                         else:
-                            self.V[i] *= -1
-                            self.Ro = R
-                            return self.photon()
+                            V[i] *= -1
+                            Ro = R
+                            return self.photon(V, Ro)
                 else:
                     theta_t = math.asin(self.n1 * math.sin(theta_i))
                     r_perp = (self.n1 * math.cos(theta_i) - self.n2 * math.cos(theta_t)) / (self.n1 * math.cos(theta_i) + self.n2 * math.cos(theta_t))
@@ -177,9 +175,9 @@ class Simulation:
                     if self.air_gap:
                         if 0 <= select_path <= Min:
                             if Min == Reflectance:
-                                self.V[i] *= -1
-                                self.Ro = R
-                                return self.photon()
+                                V[i] *= -1
+                                Ro = R
+                                return self.photon(V, Ro)
                             if Min == Transmittance:
                                 if (self.detector == 3 and y == self.w / 2) or (self.detector == 4 and y == -self.w / 2):
                                     return True
@@ -192,55 +190,55 @@ class Simulation:
                                 else:
                                     return False
                             if Min == Transmittance:
-                                self.V[i] *= -1
-                                self.Ro = R
-                                return self.photon()
+                                V[i] *= -1
+                                Ro = R
+                                return self.photon(V, Ro)
                     if not self.air_gap:
                         if (self.detector == 3 and y == self.w / 2) or (self.detector == 4 and y == -self.w / 2):
                             return True
                         else:
                             if 0 <= select_path <= Min:
                                 if Min == Reflectance:
-                                    self.V[i] *= -1
-                                    self.Ro = R
-                                    return self.photon()
+                                    V[i] *= -1
+                                    Ro = R
+                                    return self.photon(V, Ro)
                                 if Min == Transmittance:
                                     return False
                             else:
                                 if Min == Reflectance:
                                     return False
                                 if Min == Transmittance:
-                                    self.V[i] *= -1
-                                    self.Ro = R
-                                    return self.photon()
+                                    V[i] *= -1
+                                    Ro = R
+                                    return self.photon(V, Ro)
 
         for i in range(2,3):
-            if self.V[i] > 0.:
+            if V[i] > 0.:
                 z = self.h/2
-                t = (z - self.Ro[i]) / self.V[i]
-                x = self.Ro[i-2] + self.V[i-2] * t
-                y = self.Ro[i-1] + self.V[i-1] * t
+                t = (z - Ro[i]) / V[i]
+                x = Ro[i-2] + V[i-2] * t
+                y = Ro[i-1] + V[i-1] * t
                 R = np.array([x, y, z])
-            if self.V[i] < 0.:
+            if V[i] < 0.:
                 z = -self.h/2
-                t = (z - self.Ro[i]) / self.V[i]
-                x = self.Ro[i-2] + self.V[i-2] * t
-                y = self.Ro[i-1] + self.V[i-1] * t
+                t = (z - Ro[i]) / V[i]
+                x = Ro[i-2] + V[i-2] * t
+                y = Ro[i-1] + V[i-1] * t
                 R = np.array([x, y, z])
             if (-self.l/2 <= R[i-2] <= self.l/2) and (-self.w/2 <= R[i-1] <= self.w/2) and (-self.h/2 <= R[i] <= self.h/2):
-                theta_i = (math.acos(abs(self.V[i]) / math.sqrt(self.V[i-2] ** 2 + self.V[i-1] ** 2 + self.V[i] ** 2)))
+                theta_i = (math.acos(abs(V[i]) / math.sqrt(V[i-2] ** 2 + V[i-1] ** 2 + V[i] ** 2)))
                 if theta_i > self.theta_critical:
                     if self.air_gap:
-                        self.V[i] *= -1
-                        self.Ro = R
-                        return self.photon()
+                        V[i] *= -1
+                        Ro = R
+                        return self.photon(V, Ro)
                     if not(self.air_gap):
                         if (self.detector == 5 and z == self.h / 2) or (self.detector == 6 and z == -self.h / 2):
                             return True
                         else:
-                            self.V[i] *= -1
-                            self.Ro = R
-                            return self.photon()
+                            V[i] *= -1
+                            Ro = R
+                            return self.photon(V, Ro)
                 else:
                     theta_t = math.asin(self.n1 * math.sin(theta_i))
                     r_perp = (self.n1 * math.cos(theta_i) - self.n2 * math.cos(theta_t)) / (self.n1 * math.cos(theta_i) + self.n2 * math.cos(theta_t))
@@ -253,9 +251,9 @@ class Simulation:
                     if self.air_gap:
                         if 0 <= select_path <= Min:
                             if Min == Reflectance:
-                                self.V[i] *= -1
-                                self.Ro = R
-                                return self.photon()
+                                V[i] *= -1
+                                Ro = R
+                                return self.photon(V, Ro)
                             if Min == Transmittance:
                                 if (self.detector == 5 and z == self.h / 2) or (self.detector == 6 and z == -self.h / 2):
                                     return True
@@ -268,33 +266,33 @@ class Simulation:
                                 else:
                                     return False
                             if Min == Transmittance:
-                                self.V[i] *= -1
-                                self.Ro = R
-                                return self.photon()
+                                V[i] *= -1
+                                Ro = R
+                                return self.photon(V, Ro)
                     if not self.air_gap:
                         if (self.detector == 5 and z == self.h / 2) or (self.detector == 6 and z == -self.h / 2):
                             return True
                         else:
                             if 0 <= select_path <= Min:
                                 if Min == Reflectance:
-                                    self.V[i] *= -1
-                                    self.Ro = R
-                                    return self.photon()
+                                    V[i] *= -1
+                                    Ro = R
+                                    return self.photon(V, Ro)
                                 if Min == Transmittance:
                                     return False
                             else:
                                 if Min == Reflectance:
                                     return False
                                 if Min == Transmittance:
-                                    self.V[i] *= -1
-                                    self.Ro = R
-                                    return self.photon()
+                                    V[i] *= -1
+                                    Ro = R
+                                    return self.photon(V, Ro)
 
 
     def run(self, detected_photon=0):
-        self.random()
+        self.random_line()
         for n in range(1000):
-            if self.random() == False:
+            if self.random_line() == False:
                 break
 
             phi_initial = random.uniform(0., 2 * math.pi)
@@ -302,17 +300,17 @@ class Simulation:
             Vx = math.sin(theta_initial) * math.cos(phi_initial)
             Vy = math.sin(theta_initial) * math.sin(phi_initial)
             Vz = math.cos(theta_initial)
-            self.V = np.array([Vx, Vy, Vz])
+            V = np.array([Vx, Vy, Vz])
             # generates random direction (V) based on random angles of phi and theta
 
             self.T = random.uniform(self.Ts[2], self.Ts[3])
             Rox = self.T  # x(t)
             Roy = (self.T - self.Xoy) * math.tan(self.phi_line)  # y(t)
             Roz = (self.T - self.Xoz) * math.tan((math.pi / 2) - self.theta_line)  # z(t)
-            self.Ro = np.array([Rox, Roy, Roz])
+            Ro = np.array([Rox, Roy, Roz])
             # generates random point (Ro) on a line based on the angle phi and theta of that line
 
-            detected_photon += int(self.photon())
+            detected_photon += int(self.photon(V, Ro))
 
         print("Hits the detector " + str(detected_photon) + " times")
         print("Does not hit the detector " + str(1000 - detected_photon) + " times")
@@ -320,5 +318,5 @@ class Simulation:
 
 sim1 = Simulation(20.0, 10.0, 4.0, 1.5, 1.0, 1, False)
 
-print(sim1.run())
+sim1.run()
 
